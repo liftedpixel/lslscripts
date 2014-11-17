@@ -1,0 +1,5 @@
+RANDOM TP is a simple HUD that teleports you to a random region in Second Life.
+It uses the gridsurvey.com API to pick a random Second Life sim, so this script will not work in OpenSimulator.
+
+You can pick up a copy from the SL Marketplace here:
+https://marketplace.secondlife.com/p/LP-RANDOM-TP/6106648
