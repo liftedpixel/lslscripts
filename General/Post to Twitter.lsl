@@ -1,6 +1,6 @@
 key http_request_id;
-string URL = "http://liftedpixel.net/pixelplanet/tweet.php";
-string PASS = "itsasecret";
+string URL = "http://location.of/your/script.php";
+string PASS = "xxxxx";
 
 integer timeout = 60;
 integer ListenHandle;
