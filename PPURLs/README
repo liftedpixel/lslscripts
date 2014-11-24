@@ -1,0 +1,6 @@
+This is a set of PHP and LSL scripts that will write a URL to a database.
+That way you can keep track of what URLs you're using easily and can delete stale URLs from the database.
+
+I wrote a blog post about it, but it's a mess:
+
+http://liftedpixel.net/blog/posts/storing-urls
