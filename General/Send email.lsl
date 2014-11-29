@@ -16,7 +16,7 @@ default
         key id = llDetectedKey ( 0 );
         string name = llDetectedName ( 0 );
         
-        emailHeader = "PINGged by:" + name;
+        emailHeader = "PINGd by:" + name;
         
         llEmail ( emailAddress, emailHeader, "PING" );
  
