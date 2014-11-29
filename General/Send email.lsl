@@ -1,39 +1,25 @@
-string emailAddress = "email@email.email";
-string emailHeader = "";
+string emailAddress = "3309367071@vtext.com";
+string emailHeader;
  
  
 default
 {
-    state_entry()
+    state_entry ( )
     {
-        llOwnerSay("My email address is: " + (string)llGetKey() + "@lsl.secondlife.com");
-        //llSetTimerEvent(10.0);
-    }
-    
-    timer()
-    {
-        //Check for emails
-        llWhisper(PUBLIC_CHANNEL, "Checking for email...");
-        llGetNextEmail("", "");
-    }
- 
-    email(string time, string address, string subj, string message, integer num_left)
-    {
-          llOwnerSay("I got an email: " + subj + "\n" + message);
+        llSetText ( "PING Jessica\nPlease click only once\nThis sends me a short SMS", <0,0,1>, 1 );
     }
      
-    touch_start(integer num_detected)
+    touch_start ( integer num_detected )
     {
-        llSay(PUBLIC_CHANNEL, "PINGing Jessyka...");
+        llSay ( PUBLIC_CHANNEL, "PINGing Jessica..." );
  
-        key id = llDetectedKey(0);
-        string name = llDetectedName(0);
+        key id = llDetectedKey ( 0 );
+        string name = llDetectedName ( 0 );
         
-        emailHeader = "PING:" + name;
+        emailHeader = "PINGged by:" + name;
         
-        llEmail(emailAddress, emailHeader,
-            "I was touched by: '" + name + "' (" + (string)id + ").");
+        llEmail ( emailAddress, emailHeader, "PING" );
  
-        llSay(PUBLIC_CHANNEL, "PING sent");
+        llSay ( PUBLIC_CHANNEL, "PING sent" );
     }
 }
