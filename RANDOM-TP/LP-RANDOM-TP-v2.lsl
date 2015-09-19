@@ -41,6 +41,13 @@ roll ( )
     HttpRequestID = llHTTPRequest ( url, [], "" );
 }
 
+teleport ( )
+{
+    Hovertext = "Teleporting to " + RegionName;
+            llSetText ( Hovertext, BLUE, 1.0 );
+            llTeleportAgentGlobalCoords ( Toucher, RegionCoordinates, LocalCoordinates, LookAt );   
+}
+
 default
 {
     state_entry ( )
@@ -113,9 +120,7 @@ default
     {
         if ( PERMISSION_TELEPORT & perm )
         {
-            Hovertext = "Teleporting to " + RegionName;
-            llSetText ( Hovertext, BLUE, 1.0 );
-            llTeleportAgentGlobalCoords ( Toucher, RegionCoordinates, LocalCoordinates, LookAt );
+            teleport();
         }
     }
 
@@ -155,7 +160,16 @@ default
             LookAt = ZERO_VECTOR;
             Hovertext = "Requesting permission to teleport to " + RegionName + "...";
             llSetText ( Hovertext, RED, 1.0 );
-            llRequestPermissions ( Toucher, PERMISSION_TELEPORT );
+            
+            integer perms = llGetPermissions();
+            if(perms & PERMISSION_TELEPORT)
+            {
+                teleport();
+            }
+            else
+            {
+                llRequestPermissions ( Toucher, PERMISSION_TELEPORT );
+            }
         }
     }
     
