@@ -146,7 +146,7 @@ default
     {
         if (c == channelLightBus)
         {
-            string toggleMessage = "command 9c38d3d4-06b1-4fd0-9042-91e5b2f4b98f toggle";
+            string toggleMessage = "command " + (string)ownerKey + " toggle";
             if (m == "probe") { llSay(channelLightBus, "add charger"); }
             else if (m == "add-confirm") { llSay(channelLightBus, "add-command toggle"); }
             else if (m == "charge start" || m == "off" ) { turnOff("Charge disabled."); }
