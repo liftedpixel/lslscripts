@@ -12,8 +12,8 @@ default
     touch_start(integer x)
     {
         message = (string)randomInteger();
-        
-        //llSay( channel , message );
+
+        llSay( channel , message );
         llSetObjectDesc( message );
     }
 }

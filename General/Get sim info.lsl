@@ -1,3 +1,5 @@
+//OpenSim only script
+
 string RegionName;
 string GridName;
 string GridURL;
@@ -11,9 +13,9 @@ refresh ()
     GridName = osGetGridName();
     GridURL = osGetGridGatekeeperURI();
     RegionName = llGetRegionName();
-    
+
     Hovertext = "Location: " + GridName + "\n" + GridURL + ":" + RegionName;
-    
+
     llSetText ( Hovertext, BLUE, 1.0 );
 }
 
