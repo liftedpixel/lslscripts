@@ -138,7 +138,6 @@ default
 {
     state_entry() {
         turnOff("Initializing...");
-        llOwnerSay((string)llGetKey());
         ownerKey = llGetOwner();
         channelLightBus = -1 - (integer)("0x" + llGetSubString( (string) ownerKey, -7, -1) ) + 106;
         handleLightBus = llListen(channelLightBus, "", NULL_KEY, "");
@@ -153,7 +152,7 @@ default
             if (m == "probe") { llSay(channelLightBus, "add charger"); }
             else if (m == "add-confirm") { llSay(channelLightBus, "add-command toggle"); }
             else if (m == "charge start" || m == "off" ) { turnOff("Charge disabled."); }
-            //else if (m == "poke " + (string)llGetOwner()) { llDialog(llDetectedKey(0), "The menu will be here soon.", ["OK", "NOT OK"], channelLightBus); }
+            else if (m == "poke " + (string)llGetOwner()) { llDialog(llGetOwner(), "Charger Menu", ["CABLE"], channelLightBus); }
             else if (llGetSubString(m,0,9) == "power 0.99") { turnOff("Charge complete!"); }
             else if (llGetSubString(m,0,8) == "power 0.2") { turnOn("Low power. Charge enabled..."); }
             else if (m == toggleMessage) {
