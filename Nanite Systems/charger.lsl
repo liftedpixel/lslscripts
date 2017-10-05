@@ -134,6 +134,10 @@ integer channelLightBus;
 integer running = TRUE;
 vector color;
 
+statusMessage() {
+    llWhisper(PUBLIC_CHANNEL, "NS Personal Wireless Charger\nAuto charge below 20%");
+}
+
 default
 {
     state_entry() {
@@ -150,11 +154,12 @@ default
         {
             string toggleMessage = "command " + (string)ownerKey + " toggle";
             if (m == "probe") { llSay(channelLightBus, "add charger"); }
+            else if (m == "remove charger") { llOwnerSay("Removing charger."); }
             else if (m == "add-confirm") { llSay(channelLightBus, "add-command toggle"); }
             else if (m == "charge start" || m == "off" ) { turnOff("Charge disabled."); }
-            else if (m == "poke " + (string)llGetOwner()) { llDialog(llGetOwner(), "Charger Menu", ["CABLE"], channelLightBus); }
+            else if (m == "peek " + (string)llGetOwner()) { statusMessage() ;}
             else if (llGetSubString(m,0,9) == "power 0.99") { turnOff("Charge complete!"); }
-            else if (llGetSubString(m,0,8) == "power 0.2") { turnOn("Low power. Charge enabled..."); }
+            else if (llGetSubString(m,0,8) == "power 0.1") { turnOn("Low power. Charge enabled..."); }
             else if (m == toggleMessage) {
                 if (running) { turnOff("Charge disabled.");}
                 else { turnOn("Charge enabled..."); }
