@@ -5,9 +5,13 @@ integer listenOLB;
 list unitList;
 list keyList;
 
+key unitKey;
 string unitName = "none";
 vector unitColor;
-key unitKey;
+float unitRate;
+float unitFan;
+float unitTemp;
+string unitPersona = "n/a";
 integer unitLightBus;
 integer listenULB;
 
@@ -18,7 +22,6 @@ integer getChannel(key UUID) {
 init() {
     updateText("INIT");
     llParticleSystem([]);
-    hoverText("");
     ownerKey = llGetOwner();
     ownerLightBus = getChannel(ownerKey);
     listenOLB = llListen(ownerLightBus+1, "", NULL_KEY, "");
@@ -27,12 +30,8 @@ init() {
 }
 
 updateText(string message) {
-    llMessageLinked(LINK_ALL_OTHERS, 122, message, (string)color);
-}
-
-displayVitals() {
-    string display = unitName + "\n----------\nPower: " + power;
-    updateText(display);
+    //llMessageLinked(LINK_ALL_OTHERS, 122, message, (string)unitColor);
+    llMessageLinked(LINK_ALL_OTHERS, 122, (string)unitColor, message);
 }
 
 scan(float range) {
@@ -53,25 +52,34 @@ permission(key UUID) {
 }
 
 getPort(key UUID) {
+    llSay(unitLightBus, "color-q");
+    llSay(unitLightBus, "persona-q");
     if (UUID == NULL_KEY) {
-        llOwnerSay("sending [port-connect data-1]");
+        //llOwnerSay("sending [port-connect data-1]");
         llSay(unitLightBus, "port-connect data-1"); }
     else {
-        llOwnerSay("sending [port-connect " + (string)UUID + "]");
+        //llOwnerSay("sending [port-connect " + (string)UUID + "]");
         llSay(unitLightBus, "port-connect " + (string)UUID); }
 }
 
 connect(key UUID) {
     updateText("Unit: " + unitName);
     particles(UUID);
+    mainMenu(ownerKey);
 }
 
 disconnect() {
+    busSpam = FALSE;
     llParticleSystem([]);
+    unitName = "none";
+    unitColor = <0,0,0>;
+    unitPersona = "n/a";
+    unitLightBus = -25432122;
     llListenControl(listenULB, FALSE);
     llOwnerSay("Disconnecting scanner.");
     llSay(unitLightBus, "remove scanner");
     updateText("Disconnected");
+    mainMenu(ownerKey);
 }
 
 particles(key UUID) {
@@ -82,8 +90,8 @@ particles(key UUID) {
             | PSYS_PART_TARGET_POS_MASK
             | PSYS_PART_RIBBON_MASK,
         PSYS_SRC_PATTERN, PSYS_SRC_PATTERN_DROP,
-        PSYS_PART_START_COLOR, <1,1,1>,
-        PSYS_PART_END_COLOR, <1,1,1>,
+        PSYS_PART_START_COLOR, unitColor,
+        PSYS_PART_END_COLOR, unitColor,
         PSYS_PART_START_ALPHA, 1.0,
         PSYS_PART_END_ALPHA, 1.0,
         PSYS_PART_START_SCALE, <0.04, 0.04, 0>,
@@ -96,19 +104,14 @@ particles(key UUID) {
     ]);
 }
 
-beep() { updateText("beep"); llOwnerSay("beep"); }
-
-vector color = <1,1,1>;
-hoverText(string input) {
-    llSetText(input, color, 0.5);
-}
+beep() { updateText("beep"); llWhisper(PUBLIC_CHANNEL, "beep"); }
 
 mainMenu(key UUID) {
     llListenControl(listenOLB, TRUE);
     llSetTimerEvent(60);
     string x = "Spam: off";
     if (busSpam) { x = "Spam: on"; }
-    llDialog(UUID, "Select an option.\nCurrent unit: " + unitName + "\n" + x, ["SCAN","SPAM","DISPLAY","DISCONNECT","RESET"], ownerLightBus+1);
+    llDialog(UUID, "Select an option.\nCurrent unit: " + unitName + "\n" + x, ["SCAN","SPAM","DISPLAY","DISCONNECT","TEST","CLEAR","RESET"], ownerLightBus+1);
 }
 
 selectMenu(key UUID) {
@@ -126,8 +129,8 @@ disableListen() {
 
 integer busSpam = FALSE;
 toggleSpam() {
-    if (!busSpam) { busSpam = TRUE; }
-    else { busSpam = FALSE; }
+    if (!busSpam) { busSpam = TRUE; updateText("Spam enabled..."); }
+    else { busSpam = FALSE; updateText("Spam disabled."); }
 }
 
 processCommand(string input) {
@@ -137,7 +140,7 @@ processCommand(string input) {
     //hoverText("Heard params: " + params);
     if (command == "color") { messageColor(params); }
     if (command == "power") { messagePower(params); }
-    //if (command == "persona") { messagePersona(params); }
+    if (command == "persona") { messagePersona(params); }
     //if (command == "persona-eject") { messagePersona(""); }
     //if (command == "poke") { messagePoke(params); }
     //if (command == "peek") { messagePeek(params); }
@@ -153,9 +156,10 @@ messageColor(string input) {
 
 messagePersona(string input) {
     if (input == "") {
-        hoverText("Changing persona...");
+        updateText("Updating persona...");
     } else {
-        hoverText("New persona: " + input);
+        unitPersona = input;
+        updateText("Persona: " + input);
     }
 }
 
@@ -168,33 +172,50 @@ messagePower(string input) {
 }
 
 messagePoke(string input) {
-    hoverText("Poke: " + input);
+    updateText("Poke: " + input);
 }
 
 messagePeek(string input) {
-    hoverText("Peek: " + input);
+    updateText("Peek: " + input);
 }
 
 messageBolts(string input) {
     if (input == "off") {
-        hoverText("Unit unlocked");
+        updateText("Unit unlocked");
     } else {
-        hoverText("Unit locked");
+        updateText("Unit locked");
     }
 }
 
 messageCharge(string input) {
     if (input == "start") {
-        hoverText("Charge: started");
+        updateText("Charge: started");
     } else {
-        hoverText("Charge: ended");
+        updateText("Charge: ended");
     }
 }
 
 messageWeather(string input) {
     string weather = llGetSubString(input, 0, llSubStringIndex(input, " ")-1);
     integer temp = (integer)llGetSubString(input, llSubStringIndex(input, " ")+1, -1);
-    hoverText("Weather: " + weather + "\nTemp: " + (string)temp + "C");
+    updateText("Weather: " + weather + "\nTemp: " + (string)temp + "C");
+}
+
+clearScreen() {
+    updateText("INIT");
+    mainMenu(ownerKey);
+}
+
+displayVitals() {
+    updateText(unitName + " : " + unitPersona);
+    updateText("unit make and model");
+    updateText("unlocked permissions?");
+    updateText("power voltage status");
+    updateText("power settings");
+    updateText("integrity etc temp");
+    updateText("vox filters");
+    updateText("network, motors, ftl, audio, mind, video");
+    mainMenu(ownerKey);
 }
 
 default
@@ -206,6 +227,8 @@ default
             disableListen();
             if (m == "SCAN") { updateText("Scanning for units..."); scan(20);  }
             else if (m == "DISCONNECT") { updateText("Disconnecting..."); disconnect(); mainMenu(ownerKey); }
+            else if (m == "TEST") { beep(); }
+            else if (m == "CLEAR") { clearScreen(); }
             else if (m == "RESET") { llResetScript(); }
             else if (m == "OK") { mainMenu(ownerKey); }
             else if (m == "SPAM") { toggleSpam(); mainMenu(ownerKey); }
@@ -216,7 +239,7 @@ default
             }
         }
         if (c == unitLightBus) {
-            if (busSpam) { updateText(m); }
+            if (busSpam == TRUE) { llOwnerSay(unitName + " LB: " + m); updateText(m); }
             if (m == "accept " + (string)ownerKey) { llOwnerSay("Connection approved."); llSay(unitLightBus, "add scanner"); getPort(NULL_KEY); }
             else if (m == "add-confirm") { llOwnerSay("Device added.");  }
             else if (m == "add-fail") { llOwnerSay("Connection failed."); }
@@ -231,6 +254,7 @@ default
                 llOwnerSay("Port forward to: " + (string)UUID);
                 getPort(UUID);
             }
+             else { processCommand(m); }
         }
     }
 

@@ -156,7 +156,7 @@ default
             if (m == "probe") { llSay(channelLightBus, "add charger"); }
             else if (m == "remove charger") { llOwnerSay("Removing charger."); }
             else if (m == "add-confirm") { llSay(channelLightBus, "add-command toggle"); }
-            else if (m == "charge start" || m == "off" ) { turnOff("Charge disabled."); }
+            else if (m == "charge start" || m == "off" && running ) { turnOff("Charge disabled."); }
             else if (m == "peek " + (string)llGetOwner()) { statusMessage() ;}
             else if (llGetSubString(m,0,9) == "power 0.99") { turnOff("Charge complete!"); }
             else if (llGetSubString(m,0,8) == "power 0.1") { turnOn("Low power. Charge enabled..."); }
