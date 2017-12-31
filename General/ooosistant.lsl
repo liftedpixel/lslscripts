@@ -1,20 +1,19 @@
-string objectName = "Jessica's OoOsistant";
 string emailAddress = "0000000000@vtext.com";
-string emailHeader = "";
-integer listenHandle;
-integer activePing = FALSE;
-vector white = <1,1,1>;
-vector black = <0,0,0>;
-vector green = <0.2,1,0.2>;
-vector blue = <0,0.7,1>;
-vector red = <1,0,0>;
-integer Notecards;
 
-integer dialogChannel;
+vector shelfLocation = <83.20608, 24.39412, 58.39062>;
+vector shelfSize = <0.15, 0.15, 0.15>;
+vector deskLocation = <82.62545, 21.64140, 58.84116>;
+vector deskSize = <0.34, 0.34, 0.34>;
+vector offlineLocation = <83.00000, 18.62920, 58.84116>;
+vector offlineSize = <0.65, 0.65, 0.65>;
+
+key assistKey;
+
+integer chatChannel;
+integer chatHandle;
 
 integer getChannel() {
-    integer rand = 0x80000000 | (integer)llFrand(65536) | ((integer)llFrand(65536) << 16);
-    return rand;
+    return 0x80000000 | (integer)llFrand(65536) | ((integer)llFrand(65536) << 16);
 }
 
 vector getColor() {
@@ -24,116 +23,150 @@ vector getColor() {
     return <a, b, c>;
 }
 
-defaultText(){ llSetText( llGetObjectDesc() + "\nDrag notecards or click to ping Jessica.\n Notecards: " + (string)Notecards, getColor(), 1.0 ); }
+hoverText(string text) { llSetText(text, getColor(), 1.0); }
 
-init(float emailCheckTime) {
-    llSetObjectName(objectName);
-    llSetTimerEvent(emailCheckTime);
-    llOwnerSay("My email address is: " + (string)llGetKey() + "@lsl.secondlife.com");
+init() {
+    hoverText("Starting up...");
+    llTargetOmega(<0,0,1>, 1.0, 1.0);
+    status = offline;
+    assistKey = llGetOwner();
+    counter = 0;
+    llSetTextureAnim(ANIM_ON | SMOOTH | PING_PONG | LOOP, ALL_SIDES,1,1,0, TWO_PI, 0.1);
     llAllowInventoryDrop(TRUE);
-    defaultText();
+    check(online);
+    llSetTimerEvent(1.0);
 }
 
-ping() {
-    if (!activePing) {
-        activePing = TRUE;
-        llSetText("Pinging Jessica...", getColor(), 1.0);
-        listenHandle = llListen(PUBLIC_CHANNEL, "", llGetOwner(), "");
-        key id = llDetectedKey(0);
-        string name = llDetectedName(0);
-        
-        emailHeader = "PING:" + name;
-        
-        llEmail(emailAddress, emailHeader, name);
-            
-        llSetText("Jessica has been pinged.", getColor(), 1.0);
-    }
-    else {
-        llSetText("Jessica has already been pinged.", getColor(), 1.0);
+float area = 10.0;
+integer online = 1;
+integer radar = 2;
+integer mail = 3;
+check(integer what) {
+    if (what == online) { hoverText("Checking online status..."); llRequestAgentData(assistKey, DATA_ONLINE); }
+    else if (what == radar) { hoverText("Looking for Jessica..."); llSensor("", assistKey, AGENT, area, PI); }
+    else if (what == mail) { hoverText("Checking for reply..."); llGetNextEmail("", ""); }
+}
+
+integer shelf = 1;
+integer desk = 2;
+integer offline = 3;
+move(integer where) {
+    if (where == shelf) {
+        llSetPos(shelfLocation);
+        llSetScale(shelfSize);
+        hoverText("Jessica is currently in office.");
+    } else if (where == desk) {
+        llSetPos(deskLocation);
+        llSetScale(deskSize);
+        hoverText("Jessica is online, but out of office.\n\nPlease click for options.");
+    } else if (where == offline) {
+        llSetPos(offlineLocation);
+        llSetScale(offlineSize);
+        hoverText("Jessica is offline.\n\nPlease click for options.");
     }
 }
 
-message(string m) {
-    llSetObjectName(m);
-    ping();
+//      online = 1
+integer away = 2;
+//      offline = 3
+integer status;
+
+integer counter;
+
+mainMenu(key toucher) {
+    string dialog = "\n\nI'm currently out of the office, on another region, or offline. My normal office hours are\n2pm - 4pm SLT\nMonday through Friday.\n\nYOUR OPTIONS:\nINFO for additional information";
+    list options = ["INFO"];
+    if (status == away) { options += "PAGE"; dialog += "\nPAGE to ping me."; }
+    if (status == offline) { options += "MESSAGE"; dialog += "\nMESSAGE to text me a short message."; }
+    if (status == online) { llInstantMessage(toucher, "I'm currently in my office. Come speak with me directly."); }
+    llDialog(toucher, dialog, options, chatChannel);
+}
+
+string cardName = "- Jessica Pixel -";
+process(integer channel, string name, key uuid, string message) {
+    if (uuid == assistKey && llToLower(message) == "clear page") {
+        llListenRemove(assistListen);
+        activePage = FALSE;
+        hoverText("Page cleared.");
+    }
+    else if (message == "INFO") { llListenRemove(chatHandle); hoverText("Please accept the following notecard with my details:\n\n- Jessica Pixel -"); llGiveInventory(uuid, cardName); }
+    else if (message == "PAGE") { page(name); }
+    else if (message == "MESSAGE") { sendMessage(name, uuid); }
+    else { emailMessage(name, message); }
+}
+
+integer activePage = FALSE;
+integer assistListen;
+page(string name) {
+    if (!activePage) {
+        llListenRemove(chatHandle);
+        llInstantMessage(assistKey, "\nPAGE ALERT PAGE ALERT\n" + name + " is requesting you.\nPAGE ALERT PAGE ALERT");
+        hoverText("Jessica has been paged...");
+        activePage = TRUE;
+        assistListen = llListen(PUBLIC_CHANNEL, "", assistKey, "");
+    } else { llListenRemove(chatHandle); hoverText("Jessica has already been paged."); }
+}
+
+integer activeEmail = FALSE;
+sendMessage(string name, key uuid) {
+    if (activeEmail) { hoverText("A message has already been sent.\nPlease wait for a reply."); }
+    else { llTextBox(uuid, "\n\nPlease enter a short message. The OoOsistant checks every few seconds for a reply, so stick around - I may answer.", chatChannel); }
+}
+
+
+emailMessage(string name, string message) {
+    llListenRemove(chatHandle);
+    hoverText("Sending message...");
+    activeEmail = TRUE;
+    string subject = message;
+    string objectName = llGetObjectName();
+    llSetObjectName(name);
+    string body = "PING";
+    llEmail(emailAddress, subject, body);
     llSetObjectName(objectName);
-}
-checkEmail() {
-    llSetText("Checking email...", getColor(), 1.0);
-    llGetNextEmail("", "");
+    hoverText("Message has been sent.");
 }
 
-Up() { llSetPos ( llGetPos() + < 0, 0, 0.2 > ); }
-Down() { llSetPos ( llGetPos() - < 0, 0, 0.2 > ); }
-UpAndDown() {
- float x = 0.1;
- Up(); llSleep(x); Up(); llSleep(x); Up(); llSleep(x);
- Down(); llSleep(x); Down(); llSleep(x); Down();
-}
+default {
+    state_entry() {
+        init();
+    }
 
-default
-{
-    state_entry()
-    {
-        llOwnerSay("dialogchannel: " + (string)dialogChannel);
-        init(7.0);
-         llSetTextureAnim(ANIM_ON | SMOOTH | ROTATE | LOOP, ALL_SIDES,1,1,0, TWO_PI, 1);
+    timer() {
+        counter++;
+        if (counter%300 == 0) { check(online); }
+        if (activeEmail == TRUE && counter%10 == 0) { check(mail); }
     }
     
-    timer()
-    {
-       //checkEmail();
-       //UpAndDown();
-    }
- 
     email(string time, string address, string subj, string message, integer num_left)
     {
-          llWhisper(PUBLIC_CHANNEL, "Jessica says: " + message);
-    }
-     
-    touch_start(integer num_detected)
-    {
-        state offline;
+        activeEmail = FALSE;
+        llWhisper(PUBLIC_CHANNEL, "Jessica says: " + message);
     }
     
-    listen(integer c, string n, key k, string m)
-    {
-        if (m == "clear ping") {
-            activePing = FALSE;
-            llSay(PUBLIC_CHANNEL, "Ping cleared.");
-            defaultText();
+    dataserver(key q, string d) {
+        if ((integer)d == TRUE) { check(radar); }
+        else if ((integer)d == FALSE) {
+            status = offline;
+            move(offline);
         }
     }
     
-    changed( integer mask )
-    {
-        if( mask & CHANGED_INVENTORY )
-        {
-            if (Notecards != llGetInventoryNumber(INVENTORY_NOTECARD)) {
-            Notecards = llGetInventoryNumber(INVENTORY_NOTECARD);
-            defaultText();
-            llInstantMessage( llGetOwner(), "Someone left a notecard for you.  You currently have " + (string)Notecards );
-        }
-        }
+    sensor(integer d) {
+        status = online;
+        move(shelf);
     }
-}
-
-state offline {
-    state_entry() {
-        llSetText("Jessica Pixel is offline.\nClick for options.", getColor(), 1.0);
-        dialogChannel = getChannel();
-        llListen(dialogChannel, "", NULL_KEY, "");
-        llListen(dialogChannel + 1, "", NULL_KEY, "");
+    
+    no_sensor() {
+        status = away;
+        move(desk);
     }
     
     touch_end(integer d) {
-        llDialog(llDetectedKey(0), "Out of Office menu:\nPress INFO for a notecard with information on me, and using the Osistant.\nPress MESSAGE to send a message.\nPress PING to page me.\n\nYou may also drag a notecard inside.", ["INFO", "MESSAGE", "PING"], dialogChannel);
+        chatChannel = getChannel();
+        chatHandle = llListen(chatChannel, "", NULL_KEY, "");
+        mainMenu(llDetectedKey(0));
     }
     
-    listen(integer c, string n, key k, string m) {
-        if (m == "INFO") { llInstantMessage(k, "INFO pressed"); }
-        else if (m == "PING") { ping(); }
-        else if (m == "MESSAGE") { llTextBox(k, "Please enter a short message, maximum 62 characters.", dialogChannel + 1); }
-        else { message(m); }
-    }
+    listen(integer c, string n, key k, string m) { process(c,n,k,m); }
 }
